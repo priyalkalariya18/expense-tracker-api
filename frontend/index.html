@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expense Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F2F7FD;
+    --surface: #FFFFFF;
+    --blue-50: #EAF3FC;
+    --blue-100: #D9E9F9;
+    --blue-300: #9CC3EC;
+    --blue: #2F6DB5;
+    --blue-dark: #245A96;
+    --pink-50: #FDF0F5;
+    --pink-100: #FADDE8;
+    --pink-300: #F2A9C4;
+    --pink-ink: #A8335F;
+    --ink: #1C2B45;
+    --muted: #5A6A84;
+    --border: #DCE6F2;
+    --font: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    font-family: var(--font);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    background:
+      radial-gradient(900px 520px at 100% 0%, var(--pink-100), transparent 62%),
+      radial-gradient(900px 620px at 0% 100%, var(--blue-100), transparent 62%),
+      var(--bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  :focus-visible { outline: 3px solid var(--blue-300); outline-offset: 2px; }
+  button { font: inherit; cursor: pointer; }
+  button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+  /* ---------- Brand mark ---------- */
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark { position: relative; width: 34px; height: 26px; flex: none; }
+  .mark::before, .mark::after {
+    content: ""; position: absolute; top: 0; width: 26px; height: 26px; border-radius: 50%;
+  }
+  .mark::before { left: 0; background: var(--blue); }
+  .mark::after { right: 0; background: var(--pink-300); mix-blend-mode: multiply; }
+
+  /* ---------- Sign in ---------- */
+  .auth {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 40px 18px;
+  }
+  .auth-card {
+    width: min(420px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 34px 32px 26px;
+    box-shadow: 0 24px 60px rgba(47, 109, 181, 0.14);
+  }
+  .auth-card h1 { font-size: 1.7rem; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+  .auth-lead { color: var(--muted); margin: 10px 0 24px; }
+
+  .segmented {
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--blue-50); border-radius: 10px; padding: 4px; margin-bottom: 22px;
+  }
+  .seg {
+    background: none; border: none; border-radius: 8px; padding: 9px 10px;
+    font-weight: 700; color: var(--muted);
+  }
+  .seg[aria-selected="true"] { background: var(--surface); color: var(--blue); box-shadow: 0 1px 3px rgba(28,43,69,0.12); }
+
+  .field { display: block; margin-bottom: 16px; }
+  .field > span { display: block; font-size: 0.85rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+
+  .input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    color: var(--ink);
+  }
+  .input:hover { border-color: var(--blue-300); }
+  .input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-100); }
+  .input::placeholder { color: #8C9AB0; }
+
+  .btn {
+    background: var(--blue); color: #fff; border: none; border-radius: 10px;
+    padding: 10px 18px; font-weight: 700; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { background: var(--blue-dark); }
+  .btn-block { width: 100%; padding: 12px; margin-top: 4px; }
+  .btn-soft {
+    background: var(--surface); color: var(--blue); border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 16px; font-weight: 700; white-space: nowrap;
+  }
+  .btn-soft:hover:not(:disabled) { background: var(--blue-50); border-color: var(--blue-300); }
+
+  .form-error { min-height: 1.5em; margin: 12px 0 0; color: var(--pink-ink); font-weight: 600; font-size: 0.9rem; }
+
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--muted); font-size: 0.85rem; font-weight: 600; margin: 6px 0 16px;
+  }
+  .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .google-btn { display: flex; justify-content: center; min-height: 44px; }
+
+
+  .fade-out { animation: fade-out 0.35s ease forwards; }
+  @keyframes fade-out { to { opacity: 0; transform: scale(0.98); } }
+
+  /* ---------- App layout ---------- */
+  .app { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+
+  .sidebar {
+    background: rgba(255, 255, 255, 0.82);
+    border-right: 1px solid var(--border);
+    padding: 26px 18px;
+    display: flex; flex-direction: column; gap: 4px;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar .brand { font-weight: 800; font-size: 1.1rem; margin: 0 6px 26px; }
+  .user-box {
+    background: var(--pink-50); border: 1px solid var(--pink-100);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 18px;
+  }
+  .user-name { font-weight: 700; overflow-wrap: anywhere; }
+  .user-email { color: var(--muted); font-size: 0.85rem; overflow-wrap: anywhere; }
+
+  .nav-btn {
+    text-align: left; background: none; border: none; border-radius: 10px;
+    padding: 10px 14px; font-weight: 600; color: var(--muted);
+    border-left: 3px solid transparent;
+  }
+  .nav-btn:hover { background: var(--blue-50); color: var(--ink); }
+  .nav-btn[aria-current="page"] {
+    background: var(--blue-50); color: var(--blue);
+    border-left-color: var(--pink-300); border-radius: 4px 10px 10px 4px;
+  }
+  .signout { margin-top: auto; }
+
+  .main { padding: 36px clamp(18px, 4vw, 48px) 56px; min-width: 0; }
+  .page-head { margin-bottom: 24px; }
+  .page-head h2 { font-size: 1.8rem; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+  .page-head p { color: var(--muted); margin: 4px 0 0; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .panel h3 { font-size: 1.05rem; font-weight: 800; margin: 0 0 16px; }
+
+  .add-grid {
+    display: grid;
+    grid-template-columns: 160px minmax(170px, 2fr) minmax(140px, 1fr) 140px auto;
+    gap: 14px;
+    align-items: end;
+  }
+  .add-grid .field { margin: 0; }
+
+  .list-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 14px; margin-bottom: 16px; }
+  .list-head h3 { margin: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  .filters .field { margin: 0; width: 160px; }
+  .filters .field > span { font-size: 0.8rem; }
+
+  .notice { min-height: 1.5em; margin: 0 0 10px; color: var(--pink-ink); font-weight: 600; font-size: 0.92rem; }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+  .table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  .table th {
+    text-align: left; font-size: 0.8rem; font-weight: 700; color: var(--muted);
+    background: var(--blue-50); padding: 11px 14px;
+  }
+  .table td { padding: 13px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .table tbody tr:hover td { background: #F8FBFE; }
+  .c-date { white-space: nowrap; width: 130px; color: var(--muted); }
+  .c-desc { font-weight: 600; }
+  .c-desc.empty { color: #8C9AB0; font-weight: 500; }
+  .c-amt { text-align: right; white-space: nowrap; width: 140px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .c-act { width: 140px; white-space: nowrap; text-align: right; }
+
+  .chip {
+    display: inline-block; background: var(--pink-50); color: var(--pink-ink);
+    border: 1px solid var(--pink-100); border-radius: 999px;
+    padding: 2px 11px; font-size: 0.8rem; font-weight: 700;
+  }
+
+  .link-btn {
+    background: none; border: none; padding: 5px 8px; border-radius: 6px;
+    color: var(--blue); font-weight: 700; font-size: 0.88rem;
+  }
+  .link-btn:hover { background: var(--blue-50); }
+  .link-btn.danger { color: var(--pink-ink); }
+  .link-btn.danger:hover { background: var(--pink-50); }
+
+  .table tr.editing td { background: var(--blue-50); }
+  .table tr.editing .input { padding: 8px 10px; }
+
+  .table tfoot td { background: var(--pink-50); font-weight: 700; }
+  .foot-label { text-align: right; color: var(--muted); }
+
+  .empty-row td { text-align: center; padding: 40px 14px; color: var(--muted); }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; }
+  .pager-num { color: var(--muted); font-weight: 600; }
+
+  /* ---------- Report ---------- */
+  .month-form { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; }
+  .month-form .field { margin: 0; width: 210px; }
+
+  .summary {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px;
+  }
+  .stat { border-radius: 14px; padding: 20px 22px; border: 1px solid var(--border); background: var(--surface); }
+  .stat.blue { background: var(--blue-50); border-color: var(--blue-100); }
+  .stat.pink { background: var(--pink-50); border-color: var(--pink-100); }
+  .stat-label { color: var(--muted); font-weight: 600; font-size: 0.9rem; margin: 0; }
+  .stat-value { font-size: 1.9rem; font-weight: 800; margin: 4px 0 0; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  .stat-note { color: var(--muted); margin: 2px 0 0; font-size: 0.9rem; }
+
+  .report-row {
+    display: grid; grid-template-columns: 170px 1fr 150px; gap: 18px; align-items: center;
+    padding: 14px 0; border-top: 1px solid var(--border);
+  }
+  .report-row:first-of-type { border-top: none; }
+  .report-count { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
+  .track { height: 10px; background: var(--blue-50); border-radius: 999px; overflow: hidden; }
+  .bar { height: 100%; background: var(--blue); border-radius: 999px; }
+  .bar.top { background: var(--pink-300); }
+  .report-amt { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .report-empty { color: var(--muted); padding: 10px 0; margin: 0; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; right: 22px; bottom: 22px;
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px;
+    font-weight: 600; box-shadow: 0 12px 30px rgba(28,43,69,0.25);
+    opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: none; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 980px) {
+    .add-grid { grid-template-columns: 1fr 1fr; }
+    .add-grid .desc-field, .add-grid .btn { grid-column: 1 / -1; }
+  }
+
+  @media (max-width: 780px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center;
+      padding: 12px 14px; gap: 4px; border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .sidebar .brand { margin: 0 auto 0 4px; }
+    .user-box { display: none; }
+    .signout { margin-top: 0; }
+    .nav-btn { border-left: none; border-bottom: 3px solid transparent; border-radius: 8px; padding: 8px 10px; }
+    .nav-btn[aria-current="page"] { border-bottom-color: var(--pink-300); border-radius: 8px; }
+
+    .summary { grid-template-columns: 1fr; }
+    .report-row { grid-template-columns: 1fr auto; }
+    .report-row .track { grid-column: 1 / -1; order: 3; }
+
+    .table { min-width: 0; }
+    .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .table, .table tbody, .table tfoot { display: block; }
+    .table tr { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 14px; border-top: 1px solid var(--border); }
+    .table tbody tr:first-child { border-top: none; }
+    .table td { border: none; padding: 0; width: auto; background: none !important; }
+    .table .c-desc { grid-column: 1 / -1; order: -1; }
+    .table .c-act { grid-column: 1 / -1; text-align: left; margin-left: -8px; }
+    .table tr.editing { grid-template-columns: 1fr; background: var(--blue-50); }
+    .table tr.editing td { grid-column: 1 / -1; }
+    .table tfoot tr { background: var(--pink-50); }
+    .empty-row { display: block !important; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fade-out { animation: none; opacity: 0; }
+    .toast { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ Sign in / create account ============ -->
+<section class="auth" id="auth" aria-labelledby="auth-title">
+  <div class="auth-card">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <h1 id="auth-title">Expense Tracker</h1>
+    </div>
+    <p class="auth-lead">Record what you spend and see where your money goes each month.</p>
+
+    <div class="segmented" role="tablist" aria-label="Account">
+      <button class="seg" role="tab" id="tab-signin" aria-selected="true" type="button">Sign in</button>
+      <button class="seg" role="tab" id="tab-register" aria-selected="false" type="button">Create account</button>
+    </div>
+
+    <form id="auth-form" novalidate>
+      <label class="field" id="name-field" hidden>
+        <span>Full name</span>
+        <input class="input" id="auth-name" autocomplete="name" maxlength="100">
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input class="input" id="auth-email" type="email" autocomplete="email" placeholder="you@example.com">
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input class="input" id="auth-password" type="password" autocomplete="current-password" maxlength="72">
+      </label>
+      <button class="btn btn-block" id="auth-submit" type="submit">Sign in</button>
+      <p class="form-error" id="auth-error" role="alert"></p>
+    </form>
+
+    <div id="google-section" hidden>
+      <div class="divider">or</div>
+      <div class="google-btn" id="google-btn"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ App ============ -->
+<div class="app" id="app" hidden>
+  <nav class="sidebar" aria-label="Main">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Expense Tracker</div>
+    <div class="user-box">
+      <div class="user-name" id="user-name"></div>
+      <div class="user-email" id="user-email"></div>
+    </div>
+    <button class="nav-btn" data-view="expenses" aria-current="page" type="button">Expenses</button>
+    <button class="nav-btn" data-view="report" type="button">Monthly report</button>
+    <button class="nav-btn signout" id="signout" type="button">Sign out</button>
+  </nav>
+
+  <main class="main">
+    <!-- Expenses view -->
+    <section id="view-expenses" aria-labelledby="expenses-title">
+      <header class="page-head">
+        <h2 id="expenses-title">Expenses</h2>
+        <p>Add, edit, and review your spending.</p>
+      </header>
+
+      <div class="panel">
+        <h3>Add expense</h3>
+        <form class="add-grid" id="entry-form" novalidate>
+          <label class="field">
+            <span>Date</span>
+            <input class="input" id="e-date" type="date">
+          </label>
+          <label class="field desc-field">
+            <span>Description</span>
+            <input class="input" id="e-desc" maxlength="255" placeholder="Lunch with team">
+          </label>
+          <label class="field">
+            <span>Category</span>
+            <input class="input" id="e-cat" list="cat-list" maxlength="50" placeholder="Food">
+          </label>
+          <label class="field">
+            <span>Amount (₹)</span>
+            <input class="input" id="e-amt" type="number" min="0.01" step="0.01" placeholder="450.50">
+          </label>
+          <button class="btn" type="submit">Add expense</button>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="list-head">
+          <h3>Your expenses</h3>
+          <form class="filters" id="filter-form" novalidate>
+            <label class="field">
+              <span>Category</span>
+              <input class="input" id="f-cat" list="cat-list" placeholder="All">
+            </label>
+            <label class="field">
+              <span>From</span>
+              <input class="input" id="f-from" type="date">
+            </label>
+            <label class="field">
+              <span>To</span>
+              <input class="input" id="f-to" type="date">
+            </label>
+            <button class="btn-soft" type="submit">Apply</button>
+            <button class="btn-soft" type="button" id="f-clear">Clear</button>
+          </form>
+        </div>
+
+        <p class="notice" id="list-error" role="alert"></p>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Category</th>
+                <th scope="col" class="c-amt">Amount</th>
+                <th scope="col" class="c-act"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+            <tfoot id="list-foot" hidden>
+              <tr>
+                <td colspan="3" class="foot-label">Total on this page</td>
+                <td class="c-amt" id="page-total"></td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="pager">
+          <button class="btn-soft" id="prev" type="button">Previous</button>
+          <span class="pager-num" id="page-num">Page 1</span>
+          <button class="btn-soft" id="next" type="button">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Report view -->
+    <section id="view-report" aria-labelledby="report-title" hidden>
+      <header class="page-head">
+        <h2 id="report-title">Monthly report</h2>
+        <p>Your spending for a month, broken down by category.</p>
+      </header>
+
+      <div class="panel">
+        <form class="month-form" id="month-form">
+          <label class="field">
+            <span>Month</span>
+            <input class="input" id="m-month" type="month">
+          </label>
+          <button class="btn" type="submit">Show report</button>
+        </form>
+      </div>
+
+      <p class="notice" id="report-error" role="alert"></p>
+      <div id="report" aria-live="polite"></div>
+    </section>
+  </main>
+</div>
+
+<datalist id="cat-list"></datalist>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+  // ---------- Setup ----------
+  // Same address as the page when served by FastAPI (local or online).
+  // Falls back to the local API when opened as a file or from the port 5500 test server.
+  const DEFAULT_API = (location.protocol === "file:" || location.port === "5500")
+    ? "http://127.0.0.1:8000"
+    : location.origin;
+  // Paste your Google OAuth Client ID here (it ends with .apps.googleusercontent.com)
+  const GOOGLE_CLIENT_ID = "143722272278-dp60toir013vnvflvuhtmrhs8qp1c986.apps.googleusercontent.com";
+  const PAGE_SIZE = 10;
+  const COMMON_CATEGORIES = ["Food", "Travel", "Shopping", "Bills", "Rent", "Health", "Entertainment", "Education", "Other"];
+
+  const store = {
+    get(key) { try { return localStorage.getItem(key); } catch { return null; } },
+    set(key, value) { try { localStorage.setItem(key, value); } catch {} },
+    remove(key) { try { localStorage.removeItem(key); } catch {} },
+  };
+
+  const state = {
+    base: DEFAULT_API,
+    token: store.get("et.token"),
+    mode: "signin",
+    skip: 0,
+    filters: {},
+    categories: new Set(COMMON_CATEGORIES),
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 2 });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function el(tag, attrs = {}, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs)) {
+      if (key === "class") node.className = value;
+      else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+      else node.setAttribute(key, value);
+    }
+    for (const child of children) {
+      if (child == null) continue;
+      node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+    }
+    return node;
+  }
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function todayISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+  function fmtDate(iso) {
+    return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function fmtMonth(year, month) {
+    return new Date(year, month - 1, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  }
+
+  let toastTimer;
+  function toast(message) {
+    const t = $("toast");
+    t.textContent = message;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  }
+
+  // ---------- API helper ----------
+  function readError(data, status) {
+    if (data && typeof data.detail === "string") return data.detail;
+    if (data && Array.isArray(data.detail) && data.detail.length) {
+      return data.detail.map((d) => {
+        const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : "";
+        return field ? `${String(field).replace(/_/g, " ")}: ${d.msg}` : d.msg;
+      }).join(". ");
+    }
+    return `The server returned an error (${status}).`;
+  }
+
+  async function api(path, { method = "GET", body, form, auth = true } = {}) {
+    const headers = {};
+    let payload;
+    if (form) {
+      headers["Content-Type"] = "application/x-www-form-urlencoded";
+      payload = new URLSearchParams(form);
+    } else if (body !== undefined) {
+      headers["Content-Type"] = "application/json";
+      payload = JSON.stringify(body);
+    }
+    if (auth && state.token) headers.Authorization = `Bearer ${state.token}`;
+
+    let res;
+    try {
+      res = await fetch(state.base + path, { method, headers, body: payload });
+    } catch {
+      throw new Error(`Can't reach the server at ${state.base}. Start it with "uvicorn main:app --reload" and check that CORS is enabled.`);
+    }
+
+    if (res.status === 204) return null;
+    let data = null;
+    try { data = await res.json(); } catch {}
+
+    if (!res.ok) {
+      if (res.status === 401 && auth && state.token) signOut("Your session ended. Sign in again.");
+      throw new Error(readError(data, res.status));
+    }
+    return data;
+  }
+
+  // ---------- Auth ----------
+  function setMode(mode) {
+    state.mode = mode;
+    const register = mode === "register";
+    $("tab-signin").setAttribute("aria-selected", String(!register));
+    $("tab-register").setAttribute("aria-selected", String(register));
+    $("name-field").hidden = !register;
+    $("auth-password").autocomplete = register ? "new-password" : "current-password";
+    $("auth-submit").textContent = register ? "Create account" : "Sign in";
+    $("auth-error").textContent = "";
+  }
+
+  async function login(email, password) {
+    const data = await api("/login", { method: "POST", form: { username: email, password }, auth: false });
+    state.token = data.access_token;
+    store.set("et.token", state.token);
+  }
+
+  async function loadUser() {
+    const user = await api("/me");
+    $("user-name").textContent = user.name;
+    $("user-email").textContent = user.email;
+  }
+
+  $("auth-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const error = $("auth-error");
+    const name = $("auth-name").value.trim();
+    const email = $("auth-email").value.trim();
+    const password = $("auth-password").value;
+    error.textContent = "";
+
+    if (state.mode === "register" && name.length < 2) { error.textContent = "Enter a name with at least 2 characters."; return; }
+    if (!email || !email.includes("@")) { error.textContent = "Enter a valid email address."; return; }
+    if (!password) { error.textContent = "Enter your password."; return; }
+    if (state.mode === "register" && password.length < 6) { error.textContent = "Use a password with at least 6 characters."; return; }
+
+    const button = $("auth-submit");
+    button.disabled = true;
+    try {
+      const registering = state.mode === "register";
+      if (registering) {
+        await api("/register", { method: "POST", body: { name, email, password }, auth: false });
+      }
+      await login(email, password);
+      await loadUser();
+      openApp(true);
+      if (registering) toast("Account created");
+    } catch (err) {
+      error.textContent = err.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("tab-signin").addEventListener("click", () => setMode("signin"));
+  $("tab-register").addEventListener("click", () => setMode("register"));
+
+  function openApp(animate) {
+    const auth = $("auth");
+    const show = () => {
+      auth.hidden = true;
+      auth.classList.remove("fade-out");
+      $("app").hidden = false;
+      $("e-date").value = todayISO();
+      state.skip = 0;
+      showView("expenses");
+      loadExpenses();
+    };
+    if (animate && !reduceMotion) {
+      auth.classList.add("fade-out");
+      setTimeout(show, 340);
+    } else {
+      show();
+    }
+  }
+
+  function signOut(message = "") {
+    state.token = null;
+    store.remove("et.token");
+    if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect();
+    $("app").hidden = true;
+    $("auth").hidden = false;
+    $("auth-password").value = "";
+    setMode("signin");
+    $("auth-error").textContent = message;
+  }
+  $("signout").addEventListener("click", () => signOut());
+
+  // ---------- Google sign-in ----------
+  async function handleGoogleCredential(response) {
+    const error = $("auth-error");
+    error.textContent = "";
+    try {
+      const data = await api("/auth/google", {
+        method: "POST",
+        body: { credential: response.credential },
+        auth: false,
+      });
+      state.token = data.access_token;
+      store.set("et.token", state.token);
+      await loadUser();
+      openApp(true);
+    } catch (err) {
+      error.textContent = err.message;
+    }
+  }
+
+  function initGoogle(attempt = 0) {
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith("PASTE_")) return;
+    if (location.protocol === "file:") {
+      console.warn("Google sign-in needs the page to be opened from http://localhost:5500, not as a file.");
+      return;
+    }
+    if (!(window.google && google.accounts && google.accounts.id)) {
+      if (attempt < 50) setTimeout(() => initGoogle(attempt + 1), 200);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredential,
+    });
+    $("google-section").hidden = false;
+    const width = Math.min(400, $("google-btn").offsetWidth || 356);
+    google.accounts.id.renderButton($("google-btn"), {
+      theme: "outline",
+      size: "large",
+      shape: "pill",
+      text: "continue_with",
+      width,
+    });
+  }
+
+  // ---------- Navigation ----------
+  function showView(view) {
+    document.querySelectorAll(".nav-btn[data-view]").forEach((b) => {
+      if (b.dataset.view === view) b.setAttribute("aria-current", "page");
+      else b.removeAttribute("aria-current");
+    });
+    $("view-expenses").hidden = view !== "expenses";
+    $("view-report").hidden = view !== "report";
+    if (view === "report") {
+      if (!$("m-month").value) $("m-month").value = todayISO().slice(0, 7);
+      loadReport();
+    }
+  }
+  document.querySelectorAll(".nav-btn[data-view]").forEach((b) =>
+    b.addEventListener("click", () => showView(b.dataset.view))
+  );
+
+  function refreshCategories() {
+    $("cat-list").replaceChildren(...[...state.categories].sort().map((c) => el("option", { value: c })));
+  }
+
+  // ---------- Expenses ----------
+  async function loadExpenses() {
+    const params = new URLSearchParams({ skip: state.skip, limit: PAGE_SIZE });
+    if (state.filters.category) params.set("category", state.filters.category);
+    if (state.filters.start) params.set("start_date", state.filters.start);
+    if (state.filters.end) params.set("end_date", state.filters.end);
+
+    $("list-error").textContent = "";
+    try {
+      const items = await api(`/expenses?${params}`);
+      if (items.length === 0 && state.skip > 0) {
+        state.skip = Math.max(0, state.skip - PAGE_SIZE);
+        return loadExpenses();
+      }
+      items.forEach((e) => state.categories.add(e.category));
+      refreshCategories();
+      renderRows(items);
+      $("prev").disabled = state.skip === 0;
+      $("next").disabled = items.length < PAGE_SIZE;
+      $("page-num").textContent = `Page ${state.skip / PAGE_SIZE + 1}`;
+    } catch (err) {
+      if (state.token) $("list-error").textContent = err.message;
+    }
+  }
+
+  function renderRows(items) {
+    const tbody = $("rows");
+    tbody.replaceChildren();
+
+    if (items.length === 0) {
+      const filtered = state.filters.category || state.filters.start || state.filters.end;
+      const text = filtered
+        ? "No expenses match these filters. Clear them to see all expenses."
+        : "No expenses yet. Add your first one above.";
+      tbody.append(el("tr", { class: "empty-row" }, el("td", { colspan: "5" }, text)));
+      $("list-foot").hidden = true;
+      return;
+    }
+
+    items.forEach((e) => tbody.append(viewRow(e)));
+    const total = items.reduce((sum, e) => sum + Number(e.amount), 0);
+    $("page-total").textContent = inr.format(total);
+    $("list-foot").hidden = false;
+  }
+
+  function viewRow(e) {
+    const tr = el("tr");
+    const desc = e.description
+      ? el("td", { class: "c-desc" }, e.description)
+      : el("td", { class: "c-desc empty" }, "No description");
+    tr.append(
+      el("td", { class: "c-date" }, fmtDate(e.expense_date)),
+      desc,
+      el("td", { class: "c-cat" }, el("span", { class: "chip" }, e.category)),
+      el("td", { class: "c-amt" }, inr.format(Number(e.amount))),
+      el("td", { class: "c-act" },
+        el("button", { class: "link-btn", type: "button", onclick: () => editRow(tr, e) }, "Edit"),
+        el("button", { class: "link-btn danger", type: "button", onclick: () => deleteExpense(e) }, "Delete")
+      )
+    );
+    return tr;
+  }
+
+  function editRow(tr, e) {
+    const date = el("input", { class: "input", type: "date", "aria-label": "Date" });
+    date.value = e.expense_date;
+    const desc = el("input", { class: "input", maxlength: "255", "aria-label": "Description" });
+    desc.value = e.description || "";
+    const cat = el("input", { class: "input", list: "cat-list", maxlength: "50", "aria-label": "Category" });
+    cat.value = e.category;
+    const amt = el("input", { class: "input", type: "number", min: "0.01", step: "0.01", "aria-label": "Amount in rupees" });
+    amt.value = e.amount;
+
+    const save = el("button", { class: "link-btn", type: "button" }, "Save");
+    const cancel = el("button", { class: "link-btn", type: "button" }, "Cancel");
+
+    tr.classList.add("editing");
+    tr.replaceChildren(
+      el("td", { class: "c-date" }, date),
+      el("td", { class: "c-desc" }, desc),
+      el("td", { class: "c-cat" }, cat),
+      el("td", { class: "c-amt" }, amt),
+      el("td", { class: "c-act" }, save, cancel)
+    );
+    desc.focus();
+
+    cancel.addEventListener("click", () => tr.replaceWith(viewRow(e)));
+    save.addEventListener("click", async () => {
+      const updates = { expense_date: date.value, category: cat.value.trim(), amount: amt.value };
+      if (desc.value.trim()) updates.description = desc.value.trim();
+
+      if (!updates.expense_date || !updates.category || !(Number(updates.amount) > 0)) {
+        $("list-error").textContent = "Fill in the date, category, and an amount above zero before saving.";
+        return;
+      }
+      save.disabled = true;
+      try {
+        await api(`/expenses/${e.id}`, { method: "PATCH", body: updates });
+        toast("Expense updated");
+        loadExpenses();
+      } catch (err) {
+        $("list-error").textContent = err.message;
+        save.disabled = false;
+      }
+    });
+  }
+
+  async function deleteExpense(e) {
+    const label = e.description ? `"${e.description}"` : "this expense";
+    if (!confirm(`Delete ${label} for ${inr.format(Number(e.amount))}?`)) return;
+    try {
+      await api(`/expenses/${e.id}`, { method: "DELETE" });
+      toast("Expense deleted");
+      loadExpenses();
+    } catch (err) {
+      $("list-error").textContent = err.message;
+    }
+  }
+
+  $("entry-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const entry = {
+      expense_date: $("e-date").value,
+      category: $("e-cat").value.trim(),
+      amount: $("e-amt").value,
+    };
+    const desc = $("e-desc").value.trim();
+    if (desc) entry.description = desc;
+
+    const error = $("list-error");
+    if (!entry.expense_date) { error.textContent = "Choose the date of the expense."; return; }
+    if (!entry.category) { error.textContent = "Add a category, such as Food or Travel."; return; }
+    if (!(Number(entry.amount) > 0)) { error.textContent = "Enter an amount above zero."; return; }
+
+    try {
+      await api("/expenses", { method: "POST", body: entry });
+      $("e-desc").value = "";
+      $("e-amt").value = "";
+      $("e-cat").value = "";
+      error.textContent = "";
+      toast("Expense added");
+      state.skip = 0;
+      loadExpenses();
+      $("e-desc").focus();
+    } catch (err) {
+      error.textContent = err.message;
+    }
+  });
+
+  $("filter-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const start = $("f-from").value;
+    const end = $("f-to").value;
+    if (start && end && start > end) {
+      $("list-error").textContent = "The From date must be on or before the To date.";
+      return;
+    }
+    state.filters = { category: $("f-cat").value.trim(), start, end };
+    state.skip = 0;
+    loadExpenses();
+  });
+
+  $("f-clear").addEventListener("click", () => {
+    $("f-cat").value = "";
+    $("f-from").value = "";
+    $("f-to").value = "";
+    state.filters = {};
+    state.skip = 0;
+    loadExpenses();
+  });
+
+  $("prev").addEventListener("click", () => { state.skip = Math.max(0, state.skip - PAGE_SIZE); loadExpenses(); });
+  $("next").addEventListener("click", () => { state.skip += PAGE_SIZE; loadExpenses(); });
+
+  // ---------- Monthly report ----------
+  async function loadReport() {
+    const value = $("m-month").value;
+    if (!value) return;
+    const [year, month] = value.split("-").map(Number);
+    $("report-error").textContent = "";
+
+    try {
+      const report = await api(`/reports/monthly?year=${year}&month=${month}`);
+      renderReport(report);
+    } catch (err) {
+      $("report").replaceChildren();
+      if (state.token) $("report-error").textContent = err.message;
+    }
+  }
+
+  function renderReport(report) {
+    const box = $("report");
+    const monthName = fmtMonth(report.year, report.month);
+    const total = Number(report.total_spent);
+
+    if (!report.categories.length) {
+      box.replaceChildren(
+        el("div", { class: "panel" },
+          el("p", { class: "report-empty" }, `No expenses recorded for ${monthName}. Add expenses on the Expenses page to see them here.`)
+        )
+      );
+      return;
+    }
+
+    const top = report.categories[0];
+    const topShare = total > 0 ? Math.round((Number(top.total) / total) * 100) : 0;
+    const count = report.categories.reduce((sum, c) => sum + c.count, 0);
+    const max = Math.max(...report.categories.map((c) => Number(c.total)));
+
+    const summary = el("div", { class: "summary" },
+      el("div", { class: "stat blue" },
+        el("p", { class: "stat-label" }, `Total spent in ${monthName}`),
+        el("p", { class: "stat-value" }, inr.format(total)),
+        el("p", { class: "stat-note" }, `${count} ${count === 1 ? "expense" : "expenses"}`)
+      ),
+      el("div", { class: "stat pink" },
+        el("p", { class: "stat-label" }, "Biggest category"),
+        el("p", { class: "stat-value" }, top.category),
+        el("p", { class: "stat-note" }, `${topShare}% of the month's spending`)
+      )
+    );
+
+    const rows = report.categories.map((c, i) => {
+      const width = max > 0 ? (Number(c.total) / max) * 100 : 0;
+      return el("div", { class: "report-row" },
+        el("div", {},
+          el("span", { class: "chip" }, c.category),
+          el("span", { class: "report-count" }, `${c.count} ${c.count === 1 ? "expense" : "expenses"}`)
+        ),
+        el("div", { class: "track", "aria-hidden": "true" },
+          el("div", { class: i === 0 ? "bar top" : "bar", style: `width:${width}%` })
+        ),
+        el("div", { class: "report-amt" }, inr.format(Number(c.total)))
+      );
+    });
+
+    box.replaceChildren(
+      summary,
+      el("div", { class: "panel" }, el("h3", {}, "By category"), ...rows)
+    );
+  }
+
+  $("month-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    loadReport();
+  });
+
+  // ---------- Start ----------
+  (async function start() {
+    setMode("signin");
+    refreshCategories();
+    initGoogle();
+    if (state.token) {
+      try {
+        await loadUser();
+        openApp(false);
+      } catch {
+        signOut();
+      }
+    }
+  })();
+</script>
+</body>
+</html>
